@@ -6,7 +6,8 @@
   "description": "Türkiye depremleri için birliktelik kurallarının harita üzerinde graf olarak görselleştirilmesi",
   "scripts": {
     "convert": "node scripts/convert-xlsx.mjs",
-    "start": "http-server web -p 8080 -c-1"
+    "start": "http-server web -p 8080 -c-1",
+    "deploy": "git subtree push --prefix web origin gh-pages"
   },
   "devDependencies": {
     "http-server": "^14.1.1",

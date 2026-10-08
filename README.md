@@ -34,6 +34,7 @@ Requires [Node.js](https://nodejs.org/).
 npm install
 npm start            # serves web/ at http://localhost:8080/
 npm run convert      # optional: rebuild web/data/rules.json from input/*.xlsx
+npm run deploy       # publish web/ to the gh-pages branch (GitHub Pages)
 ```
 
 ## Data sources
