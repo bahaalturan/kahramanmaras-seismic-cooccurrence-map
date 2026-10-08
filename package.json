@@ -1,0 +1,15 @@
+{
+  "name": "deprem-birliktelik-haritasi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Türkiye depremleri için birliktelik kurallarının harita üzerinde graf olarak görselleştirilmesi",
+  "scripts": {
+    "convert": "node scripts/convert-xlsx.mjs",
+    "start": "http-server web -p 8080 -c-1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deprem Birliktelik Haritası</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1 data-i18n="title">Deprem Birliktelik Haritası</h1>
+      <p class="sub" data-i18n="subtitle">Türkiye, 2019–2023 · Günlük sepet · Apriori birliktelik kuralları (KOERI, ML ≥ 2.0)</p>
+    </div>
+    <div class="topbar-right">
+      <div class="summary" id="summary"></div>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="tr">TR</button><button type="button" data-lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="left">
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head">
+          <h2 data-i18n="rules">Kurallar</h2>
+          <span class="muted" id="tableInfo"></span>
+        </div>
+        <div class="table-scroll">
+          <table id="ruleTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" id="panel">
+      <div class="panel-actions">
+        <button id="resetBtn" class="btn" data-i18n="reset">Filtreleri sıfırla</button>
+      </div>
+
+      <details open>
+        <summary data-i18n="time">Zaman</summary>
+        <div class="years" id="years"></div>
+        <label class="check"><input type="checkbox" id="compareYears"> <span data-i18n="compareYears">Yılları karşılaştır (renk = yıl)</span></label>
+        <div class="row">
+          <button id="playBtn" class="btn">▶ Yılları oynat</button>
+          <span class="muted small" data-i18n="playHint">Seçim tek tek yıllar arasında döner</span>
+        </div>
+      </details>
+
+      <details open>
+        <summary data-i18n="edgeWeight">Kenar ağırlığı</summary>
+        <label class="field"><span data-i18n="weightMetric">Kalınlık / renk metriği</span>
+          <select id="weightMetric"></select>
+        </label>
+        <label class="field"><span data-i18n="aggregate">Aynı bağlantı için birleştirme</span>
+          <select id="aggregate">
+            <option value="max" data-i18n="aggMaxOpt">En büyük (max)</option>
+            <option value="mean" data-i18n="aggMeanOpt">Ortalama</option>
+            <option value="sum" data-i18n="aggSumOpt">Toplam</option>
+            <option value="count" data-i18n="aggCountOpt">Kural sayısı</option>
+          </select>
+        </label>
+        <label class="field"><span data-i18n="scaleType">Kalınlık ölçeği</span>
+          <select id="scaleType">
+            <option value="linear" data-i18n="linear">Doğrusal</option>
+            <option value="log" data-i18n="log">Logaritmik</option>
+          </select>
+        </label>
+        <label class="field"><span data-i18n="scaleRange">Kalınlık aralığı</span>
+          <select id="scaleRange">
+            <option value="visible" data-i18n="rangeVisible">Görünen kenarlar</option>
+            <option value="global" data-i18n="rangeGlobal">Tüm kurallar (yıllar arası sabit)</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="directed" checked> <span data-i18n="directed">Yönlü kenarlar (A → B ayrı çizilir)</span></label>
+        <label class="field"><span data-i18n="topN">En güçlü N kural</span> <span class="val" id="topNVal"></span>
+          <input type="range" id="topN" min="5" max="533" step="1">
+        </label>
+      </details>
+
+      <details open>
+        <summary data-i18n="metricRanges">Metrik aralıkları</summary>
+        <div id="metricRanges"></div>
+      </details>
+
+      <details open>
+        <summary data-i18n="ruleStructure">Kural yapısı</summary>
+        <div class="field"><span data-i18n="antLen">Antecedent eleman sayısı</span> <div class="chips" id="antLen"></div></div>
+        <div class="field"><span data-i18n="consLen">Consequent eleman sayısı</span> <div class="chips" id="consLen"></div></div>
+        <label class="check"><input type="checkbox" id="oneToOne"> <span data-i18n="oneToOne">Sadece 1 → 1 kurallar</span></label>
+      </details>
+
+      <details open>
+        <summary data-i18n="location">Konum</summary>
+        <label class="field"><span data-i18n="locRole">Seçili illerin rolü</span>
+          <select id="locRole">
+            <option value="any" data-i18n="roleAny">Kuralın herhangi bir tarafında</option>
+            <option value="ant" data-i18n="roleAnt">Antecedent (öncül) tarafında</option>
+            <option value="cons" data-i18n="roleCons">Consequent (sonuç) tarafında</option>
+          </select>
+        </label>
+        <div class="row">
+          <input type="search" id="locSearch" placeholder="İl ara…" data-i18n-placeholder="locSearch" class="input">
+          <button id="locClear" class="btn small" data-i18n="clear">Temizle</button>
+        </div>
+        <div class="chips locs" id="locations"></div>
+      </details>
+
+      <details open>
+        <summary data-i18n="distance">Mesafe</summary>
+        <div id="distanceRange"></div>
+        <p class="muted small" data-i18n="distanceHint">İl merkezleri arası kuş uçuşu mesafe (km). Uzak iller arasındaki birliktelikleri ayıklamak için.</p>
+      </details>
+
+      <details open>
+        <summary data-i18n="display">Görünüm</summary>
+        <label class="field"><span data-i18n="nodeSize">Düğüm boyutu</span>
+          <select id="nodeSize">
+            <option value="support" data-i18n="sizeSupport">Tekil destek (il depremli gün oranı)</option>
+            <option value="degree" data-i18n="sizeDegree">Derece (görünen kenar sayısı)</option>
+            <option value="strength" data-i18n="sizeStrength">Ağırlıklı derece</option>
+          </select>
+        </label>
+        <label class="field"><span data-i18n="basemap">Harita altlığı</span>
+          <select id="basemap">
+            <option value="auto" data-i18n="mapAuto">Sisteme göre</option>
+            <option value="light" data-i18n="mapLight">Açık</option>
+            <option value="dark" data-i18n="mapDark">Koyu</option>
+            <option value="none" data-i18n="mapNone">Sadece il sınırları</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="showLabels" checked> <span data-i18n="showLabels">İl etiketleri</span></label>
+        <label class="check"><input type="checkbox" id="showArrows" checked> <span data-i18n="showArrows">Ok başları</span></label>
+        <label class="check"><input type="checkbox" id="showBorders" checked> <span data-i18n="showBorders">İl sınırları</span></label>
+        <label class="check"><input type="checkbox" id="hideIsolated" checked> <span data-i18n="hideIsolated">Kenarı olmayan illeri gizle</span></label>
+      </details>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
