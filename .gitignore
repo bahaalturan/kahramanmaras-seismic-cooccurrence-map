@@ -2,6 +2,7 @@ node_modules/
 
 # Paper files are not published
 paper/
+paperV1/
 paperV1_figures_EN/
 *.docx
 *.pdf
