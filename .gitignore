@@ -4,6 +4,7 @@ node_modules/
 paper/
 paperV1/
 paperV1_figures_EN/
+sunum/
 *.docx
 *.pdf
 ~$*
